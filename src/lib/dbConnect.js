@@ -1,41 +1,35 @@
 import mongoose from "mongoose";
 
-const MongoDB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MongoDB_URI) {
-  throw new Error(
-    "Please define the MongoDB_URI environment variable inside .env.local"
-  );
+if (!MONGODB_URI) {
+  throw new Error("⚠️ MONGODB_URI is not defined in environment variables.");
 }
 
-let cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
+let cached = global.mongoose || { conn: null, promise: null };
 
 async function dbConnect() {
-  if (!cached.conn) {
-    return cached.conn;
-  }
+  if (cached.conn) return cached.conn;
+
   if (!cached.promise) {
-    const object = {
-      bufferCommand: false,
-      serverSelectionTimeoutMS: 5000,
-    };
-    cached.promise = mongoose.connect(MONGODB_URI,object).then((mongoose)=>{
+    cached.promise = mongoose
+      .connect(MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      })
+      .then((mongoose) => {
+        console.log("✅ Database Connected");
         return mongoose;
-    })
-
+      })
+      .catch((err) => {
+        console.error("❌ Database Connection Error:", err);
+      });
   }
-  try {
-    cached.conn  = await cached.promise;
 
-  } catch (error) {
-    cached.promise=null
-    throw error;
-  }
-  return cached.conn
+  cached.conn = await cached.promise;
+  return cached.conn;
 }
+
+global.mongoose = cached;
 
 export default dbConnect;

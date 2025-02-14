@@ -1,12 +1,33 @@
+"use client"
 import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
+import { toast } from "react-toastify";
+import { set } from "mongoose";
+import Loader from "../components/Loader";
 
 const page = () => {
+  const [isLoading,setIsLoading] = useState(false);
+  const url = process.env.NEXTAUTH_URL;
+
+  const handleLogin = async (provider) =>{
+    setIsLoading(true);
+    try {
+      await signIn(provider,{callbackUrl:url});
+      toast.info(`login with ${provider}`);
+    } catch (error) {
+      toast.error(`failer to login with ${provider},please try again`);
+    }
+    finally{
+      setIsLoading(false);
+    }
+  }
   return (
     <div className="flex min-h-screen bg-gradient-to-r from-blue-100 to-purple-200 dark:from-gray-900 dark:to-gray-800  ">
+      {isLoading && <Loader />}
       <div className="hidden w-1/2 bg-gray-100 lg:block">
         <Image
           src="/images/meet_image.jpg"
@@ -27,6 +48,7 @@ const page = () => {
             <Button
               className="w-full dark:hover:bg-white dark:hover:text-black"
               variant="outline"
+              onClick={() => handleLogin("google")}
             >
               <svg
                 className="w-5 h-5 mr-2"
@@ -54,6 +76,7 @@ const page = () => {
             <Button
               className="w-full bg-black text-white dark:hover:bg-gray-200 dark:bg-white dark:text-black"
               variant="ghost"
+              onClick={() => handleLogin("github")}
             >
               <Github className="w-5 h-5 mr-2" />
               Login with Github

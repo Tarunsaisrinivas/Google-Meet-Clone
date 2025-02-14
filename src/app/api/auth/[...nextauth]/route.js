@@ -3,7 +3,6 @@ import User from "@/models/User";
 import NextAuth from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import { pages } from "next/dist/build/templates/app-page";
 
 export const authOptions = {
   // Configure one or more authentication providers
@@ -12,7 +11,7 @@ export const authOptions = {
       clientId: process.env.GITHUB_ID,
       clientSecret: process.env.GITHUB_SECRET,
     }),
-    // ...add more providers here
+
 
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -20,13 +19,14 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, auth }) {
+    async jwt({ token, user, account }) {
       console.log("this is token", token);
       console.log("this is user", user);
-      console.log("this is auth", auth);
+      console.log("this is auth", account);
+
 
       if (user) {
-        token.id = user.id;
+        token.id = user.id || user._id?.toString(); 
       }
       if (account) {
         token.accessToken = account.access_token;
@@ -44,7 +44,7 @@ export const authOptions = {
         dbUser = await User.create({
           name: profile.name,
           email: profile.email,
-          profilePicture: profile.image,
+          profilePicture: profile.picture,
           isVerified: profile.email_verified ? true : false,
         });
       }
